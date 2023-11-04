@@ -34,7 +34,7 @@ TTablaJugadores crearTTablaJugadores(int max) {
 }
 
 void liberarTTablaJugadores(TTablaJugadores &tabla) {
-    if (tabla) {
+
         for (int i = 0; i < tabla->cota; i++) {
             if (tabla->tabla[i]) {
                 liberarTJugadoresLDE(tabla->tabla[i]->jugadores);
@@ -45,7 +45,6 @@ void liberarTTablaJugadores(TTablaJugadores &tabla) {
         delete tabla;
         tabla = NULL;
     }
-}
 
 void insertarJugadorEnTabla(TTablaJugadores &tabla, TJugador jugador, TFecha fecha) {
     const char* nombre = nombreTJugador(jugador);
@@ -73,7 +72,6 @@ void eliminarJugadorDeTTablaJugadores(TTablaJugadores &tabla, const char nombre[
             tabla->cantidad--;
         }
     
-
 
 bool perteneceATTablaJugadores(TTablaJugadores tabla, const char nombre[100]) {
     int pos = funcionDeDispersion(nombre) % tabla->cota;
