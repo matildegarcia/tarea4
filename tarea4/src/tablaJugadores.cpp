@@ -1,9 +1,7 @@
 #include "tablaJugadores.h"
 
 struct NodoTabla {
-    char nombre[100];  
-    TJugadoresLDE jugadores;  
-    NodoTabla* siguiente;
+    TJugadoresLDE jugadores;
 };
 
 struct rep_tablaJugadores {
@@ -25,120 +23,81 @@ nat funcionDeDispersion(const char nombre[100]) {
 TTablaJugadores crearTTablaJugadores(int max) {
     TTablaJugadores tabla = new rep_tablaJugadores;
     tabla->tabla = new NodoTabla*[max];
+    tabla->cantidad = 0;
     tabla->cota = max;
-    tabla->cantidad= 0;
 
     for (int i = 0; i < max; i++) {
         tabla->tabla[i] = NULL;
     }
+
     return tabla;
 }
 
 void liberarTTablaJugadores(TTablaJugadores &tabla) {
-    if (tabla != NULL) {
         for (int i = 0; i < tabla->cota; i++) {
-            NodoTabla* actual = tabla->tabla[i];
-            while (actual != NULL) {
-                NodoTabla* siguiente = actual->siguiente;
-                liberarTJugadoresLDE(actual->jugadores);
-                delete actual;
-                actual = siguiente;
+            if (tabla->tabla[i]) {
+                liberarTJugadoresLDE(tabla->tabla[i]->jugadores);
+                delete tabla->tabla[i];
             }
         }
-        tabla->cantidad = 0;
         delete[] tabla->tabla;
         delete tabla;
         tabla = NULL;
     }
-}
+
 
 void insertarJugadorEnTabla(TTablaJugadores &tabla, TJugador jugador, TFecha fecha) {
-    int posicion = funcionDeDispersion(nombreTJugador(jugador)) % tabla->cota;
-
-    NodoTabla* nuevoNodo = new NodoTabla;
-    strcpy(nuevoNodo->nombre, nombreTJugador(jugador));  
-    nuevoNodo->jugadores = crearTJugadoresLDE();
-    insertarTJugadoresLDE(nuevoNodo->jugadores, jugador, fecha);
-
-    nuevoNodo->siguiente = tabla->tabla[posicion];
-    tabla->tabla[posicion] = nuevoNodo;
-
+    const char* nombre = nombreTJugador(jugador);
+    int pos = funcionDeDispersion(nombre) % tabla->cota;
+    
+    if (tabla->tabla[pos] == NULL) {
+        tabla->tabla[pos] = new NodoTabla;
+        tabla->tabla[pos]->jugadores = crearTJugadoresLDE();
+    }
+    insertarTJugadoresLDE(tabla->tabla[pos]->jugadores, jugador, fecha);
     tabla->cantidad++;
 }
 
-// Función para eliminar al jugador de nombre "nombre" de la TTablaJugadores "tabla".
-// La función libera la memoria del jugador eliminado. 
-// La función es Theta(m) promedio, donde m es la cantidad de jugadas en la partida del jugador con nombre "nombre".
-// PRE: perteneceATTablaJugadores(tabla, nombre)
 void eliminarJugadorDeTTablaJugadores(TTablaJugadores &tabla, const char nombre[100]) {
-
-    int posicion = funcionDeDispersion(nombre);
-    NodoTabla* actual = tabla->tabla[posicion];
-    NodoTabla* anterior = NULL;
-
-    while (actual != NULL) {
-        if (strcmp(actual->nombre, nombre) == 0) {
-            if (anterior == NULL) {
-                tabla->tabla[posicion] = actual->siguiente;
-            } else {
-                anterior->siguiente = actual->siguiente;
+    int pos = funcionDeDispersion(nombre) % tabla->cota;
+    NodoTabla* nodoTabla = tabla->tabla[pos];
+    
+            eliminarJugadorConNombreTJugadoresLDE(nodoTabla->jugadores, nombre);
+            
+            if (cantidadTJugadoresLDE(nodoTabla->jugadores) == 0) {
+                liberarTJugadoresLDE(nodoTabla->jugadores);
+                delete nodoTabla;
+                tabla->tabla[pos] = NULL;
             }
-            liberarTJugadoresLDE(actual->jugadores);
-            delete actual;
             tabla->cantidad--;
-            return;
         }
-        anterior = actual;
-        actual = actual->siguiente;
-    }
-}
-
-// Función para verificar si en una TTablaJugadores "tabla" existe un jugador con nombre "nombre".
-// Devuelve true si existe, false en caso contrario.
-// La función es Theta(1) promedio.
+    
 bool perteneceATTablaJugadores(TTablaJugadores tabla, const char nombre[100]) {
-    int posicion = funcionDeDispersion(nombre);
-    NodoTabla* actual = tabla->tabla[posicion];
-
-    while (actual != NULL) {
-        if (strcmp(actual->nombre, nombre) == 0) { 
-            return true;
-        }
-        actual = actual->siguiente;
+    int pos = funcionDeDispersion(nombre) % tabla->cota;
+    NodoTabla* nodoTabla = tabla->tabla[pos];
+    
+    if (nodoTabla != NULL) {
+        return estaJugadorConNombreEnTJugadoresLDE(nodoTabla->jugadores, nombre);
     }
-
+    
     return false;
 }
 
-// Función para obtener el jugador con nombre "nombre" de la TTablaJugadores "tabla".
-// La función es Theta(1) promedio.
-// PRE: perteneceATTablaJugadores(tabla, nombre)
 TJugador obtenerJugadorDeTTablaJugadores(TTablaJugadores tabla, const char nombre[100]) {
-    int posicion = funcionDeDispersion(nombre);
-    NodoTabla* actual = tabla->tabla[posicion];
-
-    while (actual != NULL) {
-        if (strcmp(actual->nombre, nombre) == 0) {
-            if (cantidadTJugadoresLDE(actual->jugadores) > 0) {
-                return obtenerInicioDeTJugadoresLDE(actual->jugadores);
-            }
-        }
-        actual = actual->siguiente;
+    int pos = funcionDeDispersion(nombre) % tabla->cota;
+    NodoTabla* nodoTabla = tabla->tabla[pos];
+    
+    if (nodoTabla != NULL) {
+        return obtenerJugadorConNombreTJugadoresLDE(nodoTabla->jugadores, nombre);
     }
-
     return NULL;
 }
 
-
 void imprimirTTablaJugadores(TTablaJugadores tabla) {
-    if (tabla != NULL) {
-        for (int i = 0; i < tabla->cota; i++) {
-            NodoTabla* actual = tabla->tabla[i];
-            while (actual != NULL) {
-                TJugadoresLDE jugadores = actual->jugadores;
-                imprimirMenorAMayorTJugadoresLDE(jugadores);
-                actual = actual->siguiente;
-            }
+    for (int i = 0; i < tabla->cota; i++) {
+        NodoTabla* nodoTabla = tabla->tabla[i];
+        if (nodoTabla != NULL) {
+            imprimirMayorAMenorTJugadoresLDE(nodoTabla->jugadores);
         }
     }
 }
